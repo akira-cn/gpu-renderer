@@ -1,20 +1,16 @@
 const webpack = require('webpack');
 const path = require('path');
-const packageConfig = require('./package.json');
-
-function toCamelCase(str) {
-  return str.replace(/-([a-z])/ig, (s, p1) => p1.toUpperCase());
-}
 
 module.exports = function (env = {}) {
+  const filename = env.mode === 'production' ? 'gpu-renderer.min.js' : 'gpu-renderer.js';
   return {
-    mode: env.production ? 'production' : 'none',
+    mode: env.mode || 'none',
     entry: './src/index',
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: `${packageConfig.name}.js`,
+      filename,
       publicPath: '/js/',
-      library: [toCamelCase(packageConfig.name)],
+      library: ['GpuRenderer'],
       libraryTarget: 'umd',
       libraryExport: 'default',
     },
@@ -30,6 +26,13 @@ module.exports = function (env = {}) {
           use: {
             loader: 'babel-loader',
             options: {babelrc: true},
+          },
+        },
+        {
+          test: /\.(frag|vert|glsl)$/,
+          use: {
+            loader: 'raw-loader',
+            options: {},
           },
         },
       ],
@@ -56,6 +59,9 @@ module.exports = function (env = {}) {
     plugins: [
       new webpack.HotModuleReplacementPlugin({
         multiStep: true,
+      }),
+      new webpack.DefinePlugin({
+        __DEV__: env.mode !== 'production',
       }),
     ],
     // list of additional plugins
